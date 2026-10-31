@@ -18,8 +18,6 @@
         .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .rate-info { font-size: 11px; background: rgba(0,0,0,0.15); padding: 2px 8px; border-radius: 6px; font-weight: bold; }
         
-        /* 已完結畫面的起始日期 (置於金額上方) */
-        .start-date-label { font-size: 12px; opacity: 0.9; font-weight: bold; margin-bottom: 2px; }
         .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         
         /* 本金與利息的分隔線 */
@@ -131,9 +129,7 @@
                 <span>進行中定期總本金</span>
                 <span class="rate-info" id="rateIndicator">實時匯率載入中...</span>
             </div>
-            <div id="cardContentArea">
-                <span class="amount" id="totalPrincipal">HK$ 0.00</span>
-            </div>
+            <span class="amount" id="totalPrincipal">HK$ 0.00</span>
             <div class="card-divider"></div>
             <div id="totalInterestDisplay"></div>
         </div>
@@ -453,7 +449,7 @@
 
         if (currentTab === 'active') {
             document.getElementById('cardTitle').innerHTML = `<span>進行中定期總本金</span><span class="rate-info" id="rateIndicator">實時匯率: ¥ 1 = HK$ ${liveCnyToHkdRate.toFixed(2)}</span>`;
-            document.getElementById('cardContentArea').innerHTML = `<span class="amount" id="totalPrincipal">HK$ ${fmt(activeTotalPrin)}</span>`;
+            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(activeTotalPrin)}`;
             
             let totalMonthly = activeTotalDaily * 30;
 
@@ -466,14 +462,12 @@
             `;
         } else {
             document.getElementById('cardTitle').innerHTML = `<span>已完結定期總賺取利息</span><span class="rate-info" id="rateIndicator">實時匯率: ¥ 1 = HK$ ${liveCnyToHkdRate.toFixed(2)}</span>`;
+            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(finishedTotalInt)}`;
             
             let rangeText = earliestStart ? `(由 ${earliestStart.toLocaleDateString('sv-SE')} 開始)` : "";
-            document.getElementById('cardContentArea').innerHTML = `
-                <div class="start-date-label">${rangeText}</div>
-                <span class="amount" id="totalPrincipal">HK$ ${fmt(finishedTotalInt)}</span>
+            document.getElementById('totalInterestDisplay').innerHTML = `
+                <div style="font-size:12px; opacity:0.9; margin-bottom:4px; font-weight:bold;">${rangeText}</div>
             `;
-
-            document.getElementById('totalInterestDisplay').innerHTML = ``;
         }
         
         document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
