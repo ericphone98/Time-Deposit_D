@@ -10,76 +10,81 @@
         html, body { height: 100dvh; margin: 0; overflow: hidden; background: var(--bg); font-family: -apple-system, sans-serif; }
         body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
 
-        .top-panel { flex-shrink: 0; background: var(--bg); padding: 8px 12px 4px 12px; z-index: 10; }
+        .top-panel { flex-shrink: 0; background: var(--bg); padding: 8px 12px 6px 12px; z-index: 10; }
         
-        /* 總結大卡片 */
-        .display-card { background: var(--hk-orange); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 6px; box-shadow: 0 4px 10px rgba(255,149,0,0.2); }
-        .card-title { font-size: 11px; opacity: 0.85; margin-bottom: 2px; }
-        .amount { font-size: 28px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
-        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; font-variant-numeric: tabular-nums; }
+        /* 總結大卡片 (字體加大) */
+        .display-card { background: var(--hk-orange); color: white; padding: 16px; border-radius: 18px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(255,149,0,0.2); }
+        .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; }
+        .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
+        .breakdown { font-size: 13px; opacity: 0.9; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+        /* 分頁切換列 */
+        .tabs-header { display: flex; background: #e5e5ea; border-radius: 10px; padding: 3px; margin-bottom: 6px; }
+        .tab-btn { flex: 1; border: none; background: none; font-size: 13px; padding: 8px 0; border-radius: 8px; color: #3a3a3c; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { background: white; color: var(--hk-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
 
         /* 頁面切換容器 */
-        .view-container { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; margin-top: 6px; }
+        .view-container { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
         .view { display: flex; flex-direction: column; height: 100%; width: 100%; position: absolute; top: 0; left: 0; background: white; transition: transform 0.3s ease; }
         .view.hidden-left { transform: translateX(-100%); }
         .view.hidden-right { transform: translateX(100%); }
 
-        /* 主頁清單 */
-        #homeView { overflow-y: auto; padding: 12px 15px 80px 15px; }
+        /* 列表容器 */
+        .list-content { overflow-y: auto; flex: 1; padding: 14px 15px 80px 15px; }
         
-        /* 單張定期卡片設計 */
+        /* 單張定期卡片設計 (字體全面加大) */
         .deposit-item { 
-            background: #f9f9fb; border: 1px solid #e5e5ea; border-radius: 14px; 
-            padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
+            background: #f9f9fb; border: 1.5px solid #d1d1d6; border-radius: 16px; 
+            padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;
         }
         .deposit-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .bank-badge { background: #e5e5ea; color: #1c1c1e; font-size: 10px; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-block; margin-bottom: 3px; }
-        .deposit-dates { font-size: 10px; color: #8e8e93; }
-        .deposit-title { font-size: 12px; font-weight: 600; color: #1c1c1e; }
-        .deposit-duration { font-size: 10px; color: var(--hk-blue); font-weight: 500; margin-top: 2px; }
+        .bank-badge { background: #000000; color: #ffffff; font-size: 12px; padding: 3px 8px; border-radius: 6px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .deposit-dates { font-size: 13px; color: #3a3a3c; font-weight: bold; }
+        .deposit-title { font-size: 15px; font-weight: bold; color: #1c1c1e; margin-top: 2px; }
+        .deposit-duration { font-size: 12px; color: var(--hk-blue); font-weight: bold; margin-top: 4px; }
         
         .deposit-right { text-align: right; }
-        .deposit-amt { font-size: 14px; font-weight: bold; color: #34c759; font-variant-numeric: tabular-nums; }
-        .deposit-interest { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+        .deposit-amt { font-size: 18px; font-weight: bold; color: #248a3d; font-variant-numeric: tabular-nums; }
+        .deposit-interest { font-size: 13px; color: #3a3a3c; font-weight: bold; margin-top: 4px; }
 
-        /* 進度條 */
-        .progress-box { width: 100%; margin-top: 2px; }
-        .progress-info { display: flex; justify-content: space-between; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: 600; }
-        .progress-bar-bg { width: 100%; height: 6px; background: #e5e5ea; border-radius: 3px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--hk-blue); border-radius: 3px; transition: width 0.4s ease; }
+        /* 進度條 (放大) */
+        .progress-box { width: 100%; margin-top: 4px; }
+        .progress-info { display: flex; justify-content: space-between; font-size: 12px; color: #3a3a3c; margin-bottom: 4px; font-weight: bold; }
+        .progress-bar-bg { width: 100%; height: 10px; background: #e5e5ea; border-radius: 5px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--hk-blue); border-radius: 5px; transition: width 0.4s ease; }
         .progress-bar-fill.completed { background: var(--success); }
 
-        .deposit-footer { display: flex; justify-content: flex-end; margin-top: 2px; }
-        .delete-btn { background: none; border: none; color: #ff3b30; font-size: 11px; cursor: pointer; padding: 0; }
+        .deposit-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
+        .delete-btn { background: none; border: none; color: #ff3b30; font-size: 13px; font-weight: bold; cursor: pointer; padding: 4px; }
 
         /* 新增頁面樣式 */
-        #addView { padding: 20px; overflow-y: auto; background: #ffffff; }
+        #addView { padding: 20px; overflow-y: auto; background: #ffffff; z-index: 20; }
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .page-title { font-size: 18px; font-weight: bold; color: #1c1c1e; }
-        .back-btn { background: none; border: none; font-size: 15px; color: var(--hk-blue); cursor: pointer; font-weight: 500; }
+        .back-btn { background: none; border: none; font-size: 16px; color: var(--hk-blue); cursor: pointer; font-weight: bold; }
 
-        .input-row { display: flex; flex-direction: column; gap: 12px; }
+        .input-row { display: flex; flex-direction: column; gap: 14px; }
         .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
         .fields-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; }
         .field-unit { min-width: 0; width: 100%; }
         
-        label { display: block; font-size: 10px; color: #8e8e93; margin-bottom: 4px; font-weight: bold; white-space: nowrap; }
+        label { display: block; font-size: 12px; color: #3a3a3c; margin-bottom: 6px; font-weight: bold; white-space: nowrap; }
         
         input { 
-            width: 100%; height: 42px; border: 1px solid #d1d1d6; border-radius: 10px; 
-            font-size: 14px; background: #f9f9f9; text-align: center; margin: 0; padding: 0;
-            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 46px; border: 1.5px solid #d1d1d6; border-radius: 12px; 
+            font-size: 16px; background: #f9f9f9; text-align: center; margin: 0; padding: 0;
+            -webkit-appearance: none; appearance: none; font-weight: bold;
         }
 
-        .btn-submit { width: 100%; border: none; border-radius: 12px; font-weight: bold; color: white; font-size: 15px; height: 46px; cursor: pointer; background: var(--hk-blue); margin-top: 10px; }
+        .btn-submit { width: 100%; border: none; border-radius: 12px; font-weight: bold; color: white; font-size: 16px; height: 50px; cursor: pointer; background: var(--hk-blue); margin-top: 10px; }
 
         /* 浮動新增按鈕 (+) */
         .fab-btn {
             position: fixed; bottom: 30px; right: 20px; 
-            width: 54px; height: 54px; background: var(--hk-blue); color: white; 
-            border-radius: 50%; border: none; font-size: 28px; font-weight: bold;
+            width: 60px; height: 60px; background: var(--hk-blue); color: white; 
+            border-radius: 50%; border: none; font-size: 32px; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,122,255,0.4); cursor: pointer; z-index: 100;
+            box-shadow: 0 6px 16px rgba(0,122,255,0.4); cursor: pointer; z-index: 100;
             transition: transform 0.2s;
         }
         .fab-btn:active { transform: scale(0.92); }
@@ -88,35 +93,52 @@
         .bottom-bar { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); 
-            padding: 8px 15px calc(10px + env(safe-area-inset-bottom)); 
+            padding: 10px 15px calc(10px + env(safe-area-inset-bottom)); 
             display: flex; justify-content: center; border-top: 0.5px solid #e5e5ea;
             z-index: 10;
         }
-        .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #ff3b30; font-size: 10px; padding: 4px 12px; border-radius: 10px; cursor: pointer; }
+        .btn-small-mng { background: none; border: 1.5px solid #ff3b30; color: #ff3b30; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="top-panel">
-        <div style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">● 本地儲存模式</div>
+        <div style="font-size:10px; text-align:center; color:#8e8e93; margin-bottom:4px; font-weight:bold;">● 定期存款記錄器 (長者友善版)</div>
 
-        <!-- 總覽卡片 (常駐頂部) -->
+        <!-- 總覽卡片 -->
         <div class="display-card">
-            <div class="card-title">定期總本金</div>
+            <div class="card-title">進行中定期總本金</div>
             <span class="amount" id="totalPrincipal">HK$ 0.00</span>
             <div class="breakdown" id="totalInterestDisplay">預估總利息: HK$ 0.00</div>
+        </div>
+
+        <!-- 子分頁按鈕：進行中 / 已完結 -->
+        <div class="tabs-header">
+            <button class="tab-btn active" id="btnActive" onclick="switchTab('active')">⏳ 進行中</button>
+            <button class="tab-btn" id="btnFinished" onclick="switchTab('finished')">🎉 已完結</button>
         </div>
     </div>
 
     <!-- 頁面容器 -->
     <div class="view-container">
         
-        <!-- 主頁：顯示所有定期資料 -->
+        <!-- 主頁：顯示所有定期資料 (分頁) -->
         <div class="view" id="homeView">
-            <div id="logList"></div>
+            
+            <!-- 進行中列表 -->
+            <div class="list-content" id="activeListContainer">
+                <div id="activeList"></div>
+            </div>
+
+            <!-- 已完結列表 (預設隱藏) -->
+            <div class="list-content hidden" id="finishedListContainer" style="display: none;">
+                <div id="finishedList"></div>
+            </div>
+
             <div class="bottom-bar">
                 <button class="btn-small-mng" onclick="handleReset()">🧹 清空所有定期紀錄</button>
             </div>
+            
             <!-- 浮動新增按鈕 (+) -->
             <button class="fab-btn" onclick="switchView('add')">+</button>
         </div>
@@ -146,8 +168,8 @@
     </div>
 
 <script>
-    // 使用瀏覽器的 localStorage 儲存資料
     let deposits = JSON.parse(localStorage.getItem('time_deposits')) || [];
+    let currentTab = 'active'; // 'active' 或 'finished'
 
     const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
     const getFutureStr = () => {
@@ -171,6 +193,27 @@
         } else {
             addView.classList.add('hidden-right');
             homeView.classList.remove('hidden-left');
+        }
+    }
+
+    // 切換「進行中」與「已完結」分頁
+    function switchTab(tab) {
+        currentTab = tab;
+        const btnActive = document.getElementById('btnActive');
+        const btnFinished = document.getElementById('btnFinished');
+        const activeContainer = document.getElementById('activeListContainer');
+        const finishedContainer = document.getElementById('finishedListContainer');
+
+        if (tab === 'active') {
+            btnActive.classList.add('active');
+            btnFinished.classList.remove('active');
+            activeContainer.style.display = 'block';
+            finishedContainer.style.display = 'none';
+        } else {
+            btnFinished.classList.add('active');
+            btnActive.classList.remove('active');
+            activeContainer.style.display = 'none';
+            finishedContainer.style.display = 'block';
         }
     }
 
@@ -200,6 +243,7 @@
         document.getElementById('depRate').value = '';
         
         switchView('home');
+        switchTab('active');
         saveAndRender();
     }
 
@@ -220,7 +264,8 @@
     function renderDeposits() {
         let totalPrin = 0;
         let totalInt = 0;
-        let html = "";
+        let activeHtml = "";
+        let finishedHtml = "";
         const now = new Date();
         now.setHours(0,0,0,0);
 
@@ -245,17 +290,14 @@
             const isDone = pct >= 100;
             const bankName = item.bank || "預設銀行";
 
-            totalPrin += item.amt;
-            totalInt += interest;
-
-            html += `
+            let cardHtml = `
                 <div class="deposit-item">
                     <div class="deposit-header">
                         <div>
                             <span class="bank-badge">🏦 ${bankName}</span>
                             <div class="deposit-dates">${item.start} ~ ${item.end}</div>
                             <div class="deposit-title">年利率: ${item.rate}%</div>
-                            <div class="deposit-duration">⏱️ 約存 ${totalDays} 天 (約 ${totalMonths} 個月)</div>
+                            <div class="deposit-duration">⏱️ 共 ${totalDays} 天 (約 ${totalMonths} 個月)</div>
                         </div>
                         <div class="deposit-right">
                             <div class="deposit-amt">HK$ ${fmt(item.amt)}</div>
@@ -274,18 +316,28 @@
                     </div>
 
                     <div class="deposit-footer">
-                        <button class="delete-btn" onclick="deleteDeposit(${item.id})">刪除</button>
+                        <button class="delete-btn" onclick="deleteDeposit(${item.id})">刪除紀錄</button>
                     </div>
                 </div>
             `;
+
+            if (isDone) {
+                finishedHtml += cardHtml;
+            } else {
+                activeHtml += cardHtml;
+                totalPrin += item.amt;
+                totalInt += interest;
+            }
         });
 
+        // 頂部總覽只計算「進行中」的總本金與利息
         document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(totalPrin)}`;
         document.getElementById('totalInterestDisplay').innerText = `預估總利息: HK$ ${fmt(totalInt)}`;
-        document.getElementById('logList').innerHTML = html || '<div style="padding:40px; text-align:center; color:#ccc;">尚無定期存款紀錄，點擊右下角 + 新增</div>';
+        
+        document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:14px; font-weight:bold;">沒有進行中的定期存款</div>';
+        document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:14px; font-weight:bold;">沒有已完結的定期存款</div>';
     }
 
-    // 初始化渲染
     renderDeposits();
 </script>
 </body>
