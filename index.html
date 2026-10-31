@@ -15,9 +15,14 @@
         /* 總結大卡片 */
         .display-card { background: var(--hk-orange); color: white; padding: 16px; border-radius: 18px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(255,149,0,0.2); transition: background 0.3s; }
         .display-card.finished-theme { background: #34c759; box-shadow: 0 4px 10px rgba(52,199,89,0.2); }
-        .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; }
+        .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .rate-info { font-size: 10px; background: rgba(0,0,0,0.15); padding: 2px 6px; border-radius: 4px; font-weight: normal; }
+        
         .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
-        .breakdown { font-size: 13px; opacity: 0.95; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: bold; line-height: 1.5; }
+        
+        /* 本金與利息的分隔線與排版 */
+        .card-divider { width: 100%; height: 1px; background: rgba(255,255,255,0.3); margin: 10px 0; }
+        .breakdown { font-size: 13px; opacity: 0.95; font-variant-numeric: tabular-nums; font-weight: bold; line-height: 1.6; }
 
         /* 分頁切換列 */
         .tabs-header { display: flex; background: #e5e5ea; border-radius: 10px; padding: 3px; margin-bottom: 6px; }
@@ -115,8 +120,12 @@
 
         <!-- 總覽卡片 -->
         <div class="display-card" id="displayCard">
-            <div class="card-title" id="cardTitle">進行中定期總本金</div>
+            <div class="card-title" id="cardTitle">
+                <span>進行中定期總本金</span>
+                <span class="rate-info" id="rateIndicator">實時匯率載入中...</span>
+            </div>
             <span class="amount" id="totalPrincipal">HK$ 0.00</span>
+            <div class="card-divider"></div>
             <div class="breakdown" id="totalInterestDisplay">
                 利息: HK$ 0.00<br>
                 💡 每日總利息: HK$ 0.00 | 每月總利息: HK$ 0.00
@@ -174,7 +183,7 @@
                     <div class="field-unit"></div>
                 </div>
                 <div class="fields-grid">
-                    <div class="field-unit"><label>📅 起息日</label><input type="date" id="startDate"></div>
+                    <div class="field-unit"><label>📅 起息日</label><input type="date" id="startDate" onchange="autoSetEndDate()"></div>
                     <div class="field-unit"><label>📅 到期日</label><input type="date" id="endDate"></div>
                 </div>
                 <button class="btn-submit" onclick="saveDeposit()">確認儲存</button>
@@ -188,18 +197,51 @@
     let currentTab = 'active';
     let editingId = null;
 
+    // 💱 動態實時匯率（預設先給 1.18，等 API 抓到後自動更新）
+    let liveCnyToHkdRate = 1.18;
+
+    // 自動聯外抓取真實即時匯率
+    async function fetchLiveRate() {
+        try {
+            let res = await fetch('https://open.er-api.com/v6/latest/CNY');
+            let data = await res.json();
+            if (data && data.rates && data.rates.HKD) {
+                liveCnyToHkdRate = data.rates.HKD;
+                document.getElementById('rateIndicator').innerText = `實時匯率: 1¥ = ${liveCnyToHkdRate.toFixed(2)}HK$`;
+                renderDeposits(); // 抓到後立刻重新計算顯示
+            }
+        } catch (e) {
+            document.getElementById('rateIndicator').innerText = `匯率: 1¥ = ${liveCnyToHkdRate.toFixed(2)}HK$ (預設)`;
+        }
+    }
+
     const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
-    const getFutureStr = () => {
+    
+    const getOneMonthLaterStr = () => {
         let d = new Date();
-        d.setFullYear(d.getFullYear() + 1);
+        d.setMonth(d.getMonth() + 1);
         return d.toLocaleDateString('sv-SE');
     };
     
     document.getElementById('startDate').value = getTodayStr();
-    document.getElementById('endDate').value = getFutureStr();
+    document.getElementById('endDate').value = getOneMonthLaterStr();
+
+    function autoSetEndDate() {
+        let startVal = document.getElementById('startDate').value;
+        if (startVal) {
+            let d = new Date(startVal);
+            d.setMonth(d.getMonth() + 1);
+            document.getElementById('endDate').value = d.toLocaleDateString('sv-SE');
+        }
+    }
 
     function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function getSymbol(curr) { return curr === 'CNY' ? '¥' : 'HK$'; }
+
+    // 使用即時匯率將人民幣轉換為港幣
+    function toHkdValue(amt, curr) {
+        return curr === 'CNY' ? amt * liveCnyToHkdRate : amt;
+    }
 
     function switchView(target) {
         const homeView = document.getElementById('homeView');
@@ -222,7 +264,7 @@
         document.getElementById('depRate').value = '';
         document.getElementById('depCurrency').value = 'HKD';
         document.getElementById('startDate').value = getTodayStr();
-        document.getElementById('endDate').value = getFutureStr();
+        document.getElementById('endDate').value = getOneMonthLaterStr();
         switchView('add');
     }
 
@@ -310,11 +352,11 @@
     }
 
     function renderDeposits() {
-        let activePrinByCurr = { HKD: 0, CNY: 0 };
-        let activeIntByCurr = { HKD: 0, CNY: 0 };
-        let activeDailyByCurr = { HKD: 0, CNY: 0 };
+        let activeTotalPrin = 0;
+        let activeTotalInt = 0;
+        let activeTotalDaily = 0;
         
-        let finishedIntByCurr = { HKD: 0, CNY: 0 };
+        let finishedTotalInt = 0;
         let earliestStart = null;
 
         let activeItems = [];
@@ -383,18 +425,22 @@
                 </div>
             `;
 
+            let hkdAmt = toHkdValue(item.amt, curr);
+            let hkdInt = toHkdValue(interest, curr);
+            let hkdDaily = toHkdValue(dailyInterest, curr);
+
             if (isDone) {
-                finishedItems.push({ html: cardHtml, start: sDate, interest, currency: curr });
-                finishedIntByCurr[curr] = (finishedIntByCurr[curr] || 0) + interest;
+                finishedItems.push({ html: cardHtml, start: sDate });
+                finishedTotalInt += hkdInt;
                 
                 if (!earliestStart || sDate < earliestStart) {
                     earliestStart = sDate;
                 }
             } else {
-                activeItems.push({ html: cardHtml, endDate: eDate, amt: item.amt, interest, daily: dailyInterest, currency: curr });
-                activePrinByCurr[curr] = (activePrinByCurr[curr] || 0) + item.amt;
-                activeIntByCurr[curr] = (activeIntByCurr[curr] || 0) + interest;
-                activeDailyByCurr[curr] = (activeDailyByCurr[curr] || 0) + dailyInterest;
+                activeItems.push({ html: cardHtml, endDate: eDate });
+                activeTotalPrin += hkdAmt;
+                activeTotalInt += hkdInt;
+                activeTotalDaily += hkdDaily;
             }
         });
 
@@ -402,36 +448,19 @@
         let activeHtml = activeItems.map(x => x.html).join('');
         let finishedHtml = finishedItems.map(x => x.html).join('');
 
-        const formatMultiCurr = (obj) => {
-            let parts = [];
-            if (obj.HKD > 0) parts.push(`HK$ ${fmt(obj.HKD)}`);
-            if (obj.CNY > 0) parts.push(`¥ ${fmt(obj.CNY)}`);
-            return parts.length ? parts.join(' | ') : '0.00';
-        };
-
         if (currentTab === 'active') {
-            document.getElementById('cardTitle').innerText = "進行中定期總本金";
-            document.getElementById('totalPrincipal').innerText = formatMultiCurr(activePrinByCurr);
+            document.getElementById('cardTitle').innerHTML = `<span>進行中定期總本金</span><span class="rate-info" id="rateIndicator">實時匯率: 1¥ = ${liveCnyToHkdRate.toFixed(2)}HK$</span>`;
+            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(activeTotalPrin)}`;
             
-            let hkdDaily = activeDailyByCurr.HKD;
-            let cnyDaily = activeDailyByCurr.CNY;
-            let dailyStr = [];
-            if (hkdDaily > 0) dailyStr.push(`HK$ ${fmt(hkdDaily)}`);
-            if (cnyDaily > 0) dailyStr.push(`¥ ${fmt(cnyDaily)}`);
-
-            let hkdMonthly = hkdDaily * 30;
-            let cnyMonthly = cnyDaily * 30;
-            let monthlyStr = [];
-            if (hkdMonthly > 0) monthlyStr.push(`HK$ ${fmt(hkdMonthly)}`);
-            if (cnyMonthly > 0) monthlyStr.push(`¥ ${fmt(cnyMonthly)}`);
+            let totalMonthly = activeTotalDaily * 30;
 
             document.getElementById('totalInterestDisplay').innerHTML = `
-                利息: ${formatMultiCurr(activeIntByCurr)}<br>
-                💡 每日總利息: ${dailyStr.join(' | ') || '0.00'} | 每月總利息: ${monthlyStr.join(' | ') || '0.00'}
+                利息: HK$ ${fmt(activeTotalInt)}<br>
+                💡 每日總利息: HK$ ${fmt(activeTotalDaily)} | 每月總利息: HK$ ${fmt(totalMonthly)}
             `;
         } else {
-            document.getElementById('cardTitle').innerText = "已完結定期總賺取利息";
-            document.getElementById('totalPrincipal').innerText = formatMultiCurr(finishedIntByCurr);
+            document.getElementById('cardTitle').innerHTML = `<span>已完結定期總賺取利息</span><span class="rate-info" id="rateIndicator">實時匯率: 1¥ = ${liveCnyToHkdRate.toFixed(2)}HK$</span>`;
+            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(finishedTotalInt)}`;
             
             let rangeText = earliestStart ? `(由 ${earliestStart.toLocaleDateString('sv-SE')} 開始)` : "";
             document.getElementById('totalInterestDisplay').innerHTML = `🎉 累積至今天全部已順利收款！ ${rangeText}`;
@@ -441,7 +470,9 @@
         document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
     }
 
+    // 啟動時執行渲染與抓取實時匯率
     renderDeposits();
+    fetchLiveRate();
 </script>
 </body>
 </html>
