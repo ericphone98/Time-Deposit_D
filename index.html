@@ -17,7 +17,7 @@
         .display-card.finished-theme { background: #34c759; box-shadow: 0 4px 10px rgba(52,199,89,0.2); }
         .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; }
         .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
-        .breakdown { font-size: 14px; opacity: 0.95; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: bold; line-height: 1.5; }
+        .breakdown { font-size: 13px; opacity: 0.95; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: bold; line-height: 1.5; }
 
         /* 分頁切換列 */
         .tabs-header { display: flex; background: #e5e5ea; border-radius: 10px; padding: 3px; margin-bottom: 6px; }
@@ -57,12 +57,12 @@
         .progress-bar-fill { height: 100%; background: var(--hk-blue); border-radius: 6px; transition: width 0.4s ease; }
         .progress-bar-fill.completed { background: var(--success); }
 
-        /* 隱藏/精簡的底部編輯與刪除 */
-        .deposit-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 2px; }
-        .action-btn { background: none; border: none; font-size: 11px; font-weight: 500; cursor: pointer; padding: 2px 6px; opacity: 0.6; transition: opacity 0.2s; border-radius: 4px; }
-        .action-btn:hover { opacity: 1; }
-        .edit-btn { color: var(--hk-blue); background: #f0f6ff; }
-        .delete-btn { color: #ff3b30; background: #fff2f2; }
+        /* 極度低調隱藏的底部編輯與刪除 */
+        .deposit-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: -2px; }
+        .action-btn { background: none; border: none; font-size: 10px; font-weight: normal; cursor: pointer; padding: 1px 4px; opacity: 0.3; transition: opacity 0.2s; border-radius: 3px; }
+        .action-btn:hover { opacity: 0.8; }
+        .edit-btn { color: #8e8e93; }
+        .delete-btn { color: #ff3b30; }
 
         /* 新增/編輯頁面樣式 */
         #addView { padding: 20px; overflow-y: auto; background: #ffffff; z-index: 20; }
@@ -96,15 +96,16 @@
         }
         .fab-btn:active { transform: scale(0.92); }
 
-        /* 底部控制列 */
+        /* 極度低調的底部清空按鈕 */
         .bottom-bar { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); 
-            padding: 10px 15px calc(10px + env(safe-area-inset-bottom)); 
+            padding: 8px 15px calc(8px + env(safe-area-inset-bottom)); 
             display: flex; justify-content: center; border-top: 0.5px solid #e5e5ea;
             z-index: 10;
         }
-        .btn-small-mng { background: none; border: 1.5px solid #ff3b30; color: #ff3b30; font-size: 13px; font-weight: bold; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+        .btn-small-mng { background: none; border: none; color: #8e8e93; font-size: 11px; font-weight: normal; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; }
+        .btn-small-mng:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -112,7 +113,7 @@
     <div class="top-panel">
         <div style="font-size:11px; text-align:center; color:#8e8e93; margin-bottom:4px; font-weight:bold;">● 定期存款記錄器</div>
 
-        <!-- 總覽卡片 (會隨分頁切換顏色與內容) -->
+        <!-- 總覽卡片 -->
         <div class="display-card" id="displayCard">
             <div class="card-title" id="cardTitle">進行中定期總本金</div>
             <span class="amount" id="totalPrincipal">HK$ 0.00</span>
@@ -142,7 +143,7 @@
             </div>
 
             <div class="bottom-bar">
-                <button class="btn-small-mng" onclick="handleReset()">🧹 清空所有定期紀錄</button>
+                <button class="btn-small-mng" onclick="handleReset()">清空紀錄</button>
             </div>
             
             <button class="fab-btn" onclick="openAddView()">+</button>
@@ -314,9 +315,10 @@
         let activeDailyByCurr = { HKD: 0, CNY: 0 };
         
         let finishedIntByCurr = { HKD: 0, CNY: 0 };
+        let earliestStart = null;
 
-        let activeHtml = "";
-        let finishedHtml = "";
+        let activeItems = [];
+        let finishedItems = [];
         const now = new Date();
         now.setHours(0,0,0,0);
 
@@ -330,107 +332,4 @@
             let diffMonths = (eDate.getFullYear() - sDate.getFullYear()) * 12 + (eDate.getMonth() - sDate.getMonth());
             let totalMonths = Math.max(1, diffMonths);
 
-            let interest = (item.amt * (item.rate / 100) * totalDays) / 365;
-            let dailyInterest = (item.amt * (item.rate / 100)) / 365;
-
-            let passedDays = Math.ceil((now - sDate) / (1000 * 60 * 60 * 24));
-            let remainingDays = Math.ceil((eDate - now) / (1000 * 60 * 60 * 24));
-            
-            let pct = 0;
-            if (passedDays <= 0) pct = 0;
-            else if (now >= eDate) pct = 100;
-            else pct = Math.min(100, Math.max(0, Math.round((passedDays / totalDays) * 100)));
-
-            const isDone = pct >= 100;
-            const bankName = item.bank || "預設銀行";
-            const curr = item.currency || 'HKD';
-            const sym = getSymbol(curr);
-            const timeDesc = `共 ${totalMonths} 個月 (${totalDays} 天)`;
-            const remainText = isDone ? "🎉 已到期完成" : `⏳ 尚餘 ${remainingDays} 天`;
-
-            let cardHtml = `
-                <div class="deposit-item">
-                    <div class="deposit-header">
-                        <div>
-                            <span class="bank-badge">🏦 ${bankName}</span>
-                            <span class="currency-badge">${curr}</span>
-                            <div class="deposit-dates">${item.start} ~ ${item.end}</div>
-                            <div class="deposit-duration">⏱️ ${timeDesc}</div>
-                        </div>
-                        <div class="deposit-right">
-                            <div class="deposit-amt">${sym} ${fmt(item.amt)}</div>
-                            <div class="deposit-rate">年利率 ${item.rate}%</div>
-                            <div class="deposit-interest">利息: +${sym} ${fmt(interest)}</div>
-                        </div>
-                    </div>
-
-                    <div class="progress-box">
-                        <div class="progress-info">
-                            <span>${remainText}</span>
-                            <span>${pct}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill ${isDone ? 'completed' : ''}" style="width: ${pct}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="deposit-footer">
-                        <button class="action-btn edit-btn" onclick="openEditView(${item.id})">編輯</button>
-                        <button class="action-btn delete-btn" onclick="deleteDeposit(${item.id})">刪除</button>
-                    </div>
-                </div>
-            `;
-
-            if (isDone) {
-                finishedHtml += cardHtml;
-                finishedIntByCurr[curr] = (finishedIntByCurr[curr] || 0) + interest;
-            } else {
-                activeHtml += cardHtml;
-                activePrinByCurr[curr] = (activePrinByCurr[curr] || 0) + item.amt;
-                activeIntByCurr[curr] = (activeIntByCurr[curr] || 0) + interest;
-                activeDailyByCurr[curr] = (activeDailyByCurr[curr] || 0) + dailyInterest;
-            }
-        });
-
-        // 格式化多幣別顯示字串
-        const formatMultiCurr = (obj) => {
-            let parts = [];
-            if (obj.HKD > 0) parts.push(`HK$ ${fmt(obj.HKD)}`);
-            if (obj.CNY > 0) parts.push(`¥ ${fmt(obj.CNY)}`);
-            return parts.length ? parts.join(' | ') : '0.00';
-        };
-
-        if (currentTab === 'active') {
-            document.getElementById('cardTitle').innerText = "進行中定期總本金";
-            document.getElementById('totalPrincipal').innerText = formatMultiCurr(activePrinByCurr);
-            
-            let hkdDaily = activeDailyByCurr.HKD;
-            let cnyDaily = activeDailyByCurr.CNY;
-            let dailyStr = [];
-            if (hkdDaily > 0) dailyStr.push(`HK$ ${fmt(hkdDaily)}`);
-            if (cnyDaily > 0) dailyStr.push(`¥ ${fmt(cnyDaily)}`);
-
-            let hkdMonthly = hkdDaily * 30;
-            let cnyMonthly = cnyDaily * 30;
-            let monthlyStr = [];
-            if (hkdMonthly > 0) monthlyStr.push(`HK$ ${fmt(hkdMonthly)}`);
-            if (cnyMonthly > 0) monthlyStr.push(`¥ ${fmt(cnyMonthly)}`);
-
-            document.getElementById('totalInterestDisplay').innerHTML = `
-                利息: ${formatMultiCurr(activeIntByCurr)}<br>
-                💡 每日總利息: ${dailyStr.join(' | ') || '0.00'} | 每月總利息: ${monthlyStr.join(' | ') || '0.00'}
-            `;
-        } else {
-            document.getElementById('cardTitle').innerText = "已完結定期總賺取利息";
-            document.getElementById('totalPrincipal').innerText = formatMultiCurr(finishedIntByCurr);
-            document.getElementById('totalInterestDisplay').innerHTML = `🎉 恭喜全部已順利到期收款！`;
-        }
-        
-        document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
-        document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
-    }
-
-    renderDeposits();
-</script>
-</body>
-</html>
+            let interest = (item
