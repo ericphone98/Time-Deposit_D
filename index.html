@@ -2,159 +2,254 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HKD 智能存摺 (銀行精確版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>定期存款記錄器</title>
     <style>
-        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --danger: #ff3b30; --predict: #5856d6; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 12px; color: #1c1c1e; }
-        .container { max-width: 420px; margin: auto; }
-        .display-card { background: var(--hk-blue); color: white; padding: 25px 20px; border-radius: 20px; text-align: center; margin-bottom: 15px; box-shadow: 0 8px 16px rgba(0,122,255,0.15); }
-        .is-predicting { background: var(--predict); }
-        .amount { font-size: 32px; font-weight: bold; margin: 5px 0; display: block; }
-        .input-card { background: var(--card-bg); padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .section-title { font-size: 15px; font-weight: bold; margin-bottom: 12px; }
-        .compact-row { display: flex; gap: 10px; margin-bottom: 12px; }
-        label { display: block; font-size: 12px; color: #8e8e93; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; font-size: 15px; }
-        .btn-blue { background: var(--hk-blue); }
-        .btn-orange { background: var(--hk-orange); }
-        .log-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f2f2f7; background: white; align-items: center; }
-        .date-label { font-size: 11px; color: #8e8e93; display: block; }
-        .type-int { color: var(--predict); font-weight: bold; font-size: 13px; }
-        .del-btn { color: var(--danger); background: none; border: none; font-size: 20px; cursor: pointer; }
+        :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --withdraw: #ff453a; --success: #34c759; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100dvh; margin: 0; overflow: hidden; background: var(--bg); font-family: -apple-system, sans-serif; }
+        body { display: flex; flex-direction: column; padding: env(safe-area-inset-top) 0 0 0; }
+
+        .top-panel { flex-shrink: 0; background: var(--bg); padding: 5px 12px 0 12px; z-index: 10; }
+        
+        .display-card { background: var(--hk-orange); color: white; padding: 12px 15px; border-radius: 18px; margin-bottom: 8px; }
+        .card-title { font-size: 11px; opacity: 0.85; margin-bottom: 2px; }
+        .amount { font-size: 28px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
+        .breakdown { font-size: 11px; opacity: 0.85; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+        .input-card { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 6px; border-left: 3.5px solid var(--hk-orange); border-right: 3.5px solid var(--hk-orange); }
+        
+        .input-row { display: flex; flex-direction: column; gap: 8px; }
+        .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+        .fields-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; width: 100%; }
+        .field-unit { min-width: 0; width: 100%; }
+        
+        label { display: block; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: bold; white-space: nowrap; }
+        
+        input { 
+            width: 100%; height: 38px; border: 1px solid #d1d1d6; border-radius: 8px; 
+            font-size: 13px; background: #f9f9f9; text-align: center; margin: 0; padding: 0 2px;
+            -webkit-appearance: none; appearance: none;
+        }
+
+        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; height: 38px; cursor: pointer; background: var(--hk-orange); margin-top: 2px; }
+
+        .log-section { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
+        #logList { overflow-y: auto; flex: 1; padding: 10px 15px 70px 15px; }
+        
+        .deposit-item { 
+            background: #f9f9fb; border: 1px solid #e5e5ea; border-radius: 14px; 
+            padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .deposit-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .bank-badge { background: #e5e5ea; color: #1c1c1e; font-size: 10px; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-block; margin-bottom: 3px; }
+        .deposit-dates { font-size: 10px; color: #8e8e93; }
+        .deposit-title { font-size: 12px; font-weight: 600; color: #1c1c1e; }
+        .deposit-duration { font-size: 10px; color: var(--hk-blue); font-weight: 500; margin-top: 2px; }
+        
+        .deposit-right { text-align: right; }
+        .deposit-amt { font-size: 14px; font-weight: bold; color: #34c759; font-variant-numeric: tabular-nums; }
+        .deposit-interest { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+
+        /* 進度條外框與內條 */
+        .progress-box { width: 100%; margin-top: 2px; }
+        .progress-info { display: flex; justify-content: space-between; font-size: 9px; color: #8e8e93; margin-bottom: 3px; font-weight: 600; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #e5e5ea; border-radius: 3px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--hk-blue); border-radius: 3px; transition: width 0.4s ease; }
+        .progress-bar-fill.completed { background: var(--success); }
+
+        .deposit-footer { display: flex; justify-content: flex-end; margin-top: 2px; }
+        .delete-btn { background: none; border: none; color: #ff3b30; font-size: 11px; cursor: pointer; padding: 0; }
+
+        .bottom-bar { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); 
+            padding: 8px 15px calc(10px + env(safe-area-inset-bottom)); 
+            display: flex; justify-content: center; border-top: 0.5px solid #e5e5ea;
+        }
+        .btn-small-mng { background: none; border: 1px solid #e5e5ea; color: #ff3b30; font-size: 10px; padding: 4px 12px; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="display-card" id="mainCard">
-        <small id="statusText">當前本利總和 (HKD)</small>
-        <span class="amount" id="totalDisplay">HK$ 0.00</span>
-        <div id="subInfo" style="font-size: 12px; opacity: 0.9;"></div>
-    </div>
+    <div class="top-panel">
+        <div id="syncStatus" style="font-size:9px; text-align:center; color:#8e8e93; margin-bottom:2px;">同步中...</div>
 
-    <div class="input-card" style="border: 2px solid var(--predict);">
-        <label>🔭 預測/查詢日期：</label>
-        <input type="date" id="targetDate" onchange="runCalculation()">
-    </div>
-
-    <div class="input-card">
-        <div class="section-title">💰 資金變動</div>
-        <div class="compact-row">
-            <div style="flex: 1;"><label>類型</label><select id="transType"><option value="dep">存入</option><option value="wit">提取</option></select></div>
-            <div style="flex: 2;"><label>金額</label><input type="number" id="transAmt" placeholder="800000"></div>
+        <div class="display-card">
+            <div class="card-title">定期總本金</div>
+            <span class="amount" id="totalPrincipal">HK$ 0.00</span>
+            <div class="breakdown" id="totalInterestDisplay">預估總利息: HK$ 0.00</div>
         </div>
-        <div class="compact-row"><div style="flex: 1;"><label>生效日期</label><input type="date" id="transDate"></div></div>
-        <button class="btn btn-blue" onclick="addTransaction()">📥 更新資金紀錄</button>
-    </div>
 
-    <div class="input-card" style="border-left: 5px solid var(--hk-orange);">
-        <div class="section-title" style="color: var(--hk-orange);">📈 利率調整</div>
-        <div class="compact-row">
-            <div style="flex: 2;"><label>生效日期</label><input type="date" id="rateDate"></div>
-            <div style="flex: 1;"><label>年利率 (%)</label><input type="number" id="rateVal" step="0.01" placeholder="3.25"></div>
+        <div class="input-card">
+            <div class="input-row">
+                <div class="fields-grid-3">
+                    <div class="field-unit"><label>🏦 銀行</label><input type="text" id="depBank" placeholder="匯豐 / 恒生"></div>
+                    <div class="field-unit"><label>💰 本金</label><input type="number" id="depAmt" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-unit"><label>📈 年利率 %</label><input type="number" id="depRate" placeholder="0.00" inputmode="decimal"></div>
+                </div>
+                <div class="fields-grid">
+                    <div class="field-unit"><label>📅 起息日</label><input type="date" id="startDate"></div>
+                    <div class="field-unit"><label>📅 到期日</label><input type="date" id="endDate"></div>
+                </div>
+                <button class="btn" onclick="addDeposit()">新增定期存款</button>
+            </div>
         </div>
-        <button class="btn btn-orange" onclick="updateRate()">🚀 發佈利率更變</button>
     </div>
 
-    <div id="logList" style="border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); background:white;"></div>
-    <button style="width:100%; background:none; border:none; color:#c7c7cc; margin-top:30px; font-size:12px; cursor:pointer;" onclick="clearAllData()">⚠️ 重設所有數據</button>
-</div>
+    <div class="log-section">
+        <div id="logList"></div>
+        <div class="bottom-bar">
+            <button class="btn-small-mng" onclick="handleReset()">🧹 清空所有定期紀錄</button>
+        </div>
+    </div>
 
 <script>
-    const STORAGE_KEY = 'HK_BANK_PRECISION_V1';
-    let history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const SCRIPT_URL = '你的_GOOGLE_APPS_SCRIPT_URL_在這裡';
+    let db = { deposits: [] };
 
-    // 初始化日期：預測日期預設為「今天」
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    document.getElementById('transDate').value = todayStr;
-    document.getElementById('rateDate').value = todayStr;
-    document.getElementById('targetDate').value = todayStr;
+    const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
+    const getFutureStr = () => {
+        let d = new Date();
+        d.setFullYear(d.getFullYear() + 1);
+        return d.toLocaleDateString('sv-SE');
+    };
+    
+    document.getElementById('startDate').value = getTodayStr();
+    document.getElementById('endDate').value = getFutureStr();
 
-    function addTransaction() {
-        const val = parseFloat(document.getElementById('transAmt').value);
-        if (isNaN(val)) return;
-        history.push({ id: Date.now(), type: document.getElementById('transType').value, date: document.getElementById('transDate').value, value: val });
-        saveAndRun();
+    function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    async function pull() {
+        try {
+            const r = await fetch(`${SCRIPT_URL}?action=read`);
+            const data = await r.json();
+            if (data) {
+                if (Array.isArray(data)) db.deposits = data;
+                else if (data.deposits) db = data;
+            }
+            renderDeposits();
+            document.getElementById('syncStatus').innerText = "● 雲端同步完成";
+        } catch (e) {
+            document.getElementById('syncStatus').innerText = "× 同步失敗";
+        }
     }
 
-    function updateRate() {
-        const val = parseFloat(document.getElementById('rateVal').value);
-        if (isNaN(val)) return;
-        history.push({ id: Date.now(), type: 'rate', date: document.getElementById('rateDate').value, value: val });
-        saveAndRun();
+    async function push() {
+        document.getElementById('syncStatus').innerText = "📤 儲存中...";
+        await fetch(`${SCRIPT_URL}?action=write&data=${encodeURIComponent(JSON.stringify(db))}`, { mode: 'no-cors' });
+        renderDeposits();
+        setTimeout(pull, 1000);
     }
 
-    function saveAndRun() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-        runCalculation();
-    }
+    function addDeposit() {
+        let bank = document.getElementById('depBank').value.trim() || "預設銀行";
+        let amt = parseFloat(document.getElementById('depAmt').value);
+        let rate = parseFloat(document.getElementById('depRate').value);
+        let start = document.getElementById('startDate').value;
+        let end = document.getElementById('endDate').value;
 
-    function clearAllData() { if(confirm("清空數據？")) { localStorage.removeItem(STORAGE_KEY); history = []; location.reload(); } }
-    function deleteRecord(id) { history = history.filter(h => h.id !== id); saveAndRun(); }
-
-    function runCalculation() {
-        const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
-        const targetStr = document.getElementById('targetDate').value;
-        const targetDate = new Date(targetStr);
-        targetDate.setHours(0,0,0,0); // 設定為當天 0 點，代表「當天還沒過完」
-        
-        if (sorted.length === 0) {
-            document.getElementById('totalDisplay').innerText = "HK$ 0.00";
-            return;
+        if (!amt || !rate || !start || !end) {
+            return alert("請完整填寫銀行、本金、利率及起訖日期！");
+        }
+        if (new Date(start) >= new Date(end)) {
+            return alert("到期日必須大於起息日！");
         }
 
-        let currentP = 0, currentRate = 0, accruedI = 0, totalDays = 0, logHtml = "";
-        let iter = new Date(sorted[0].date);
-        iter.setHours(0,0,0,0);
+        db.deposits.push({ id: Date.now(), bank, amt, rate, start, end });
+        document.getElementById('depBank').value = '';
+        document.getElementById('depAmt').value = '';
+        document.getElementById('depRate').value = '';
+        push();
+    }
 
-        // 循環每一天直到預測日
-        while (iter <= targetDate) {
+    function deleteDeposit(id) {
+        if (confirm("確定刪除這筆定期紀錄？")) {
+            db.deposits = db.deposits.filter(x => x.id !== id);
+            push();
+        }
+    }
+
+    function handleReset() {
+        if (confirm("確定清空所有定期存款紀錄？")) {
+            db.deposits = [];
+            push();
+        }
+    }
+
+    function renderDeposits() {
+        let totalPrin = 0;
+        let totalInt = 0;
+        let html = "";
+        const now = new Date();
+        now.setHours(0,0,0,0);
+
+        db.deposits.forEach(item => {
+            let sDate = new Date(item.start);
+            let eDate = new Date(item.end);
+            sDate.setHours(0,0,0,0);
+            eDate.setHours(0,0,0,0);
             
-            // 每月 1 號結算邏輯
-            if (iter.getDate() === 1 && iter > new Date(sorted[0].date)) {
-                if (accruedI > 0) {
-                    currentP += accruedI;
-                    logHtml = `<div class="log-item"><div><span class="type-int">📅 利息撥入本金</span><span class="date-label">${iter.toLocaleDateString()}</span></div><span class="type-int">+${accruedI.toFixed(2)}</span><span style="width:30px"></span></div>` + logHtml;
-                    accruedI = 0;
-                }
-            }
+            // 天數與月數
+            let totalDays = Math.max(1, Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)));
+            let diffMonths = (eDate.getFullYear() - sDate.getFullYear()) * 12 + (eDate.getMonth() - sDate.getMonth());
+            let totalMonths = Math.max(1, (diffMonths + (eDate.getDate() - sDate.getDate()) / 30)).toFixed(1);
 
-            // 處理當天發生的交易/利率變動
-            sorted.forEach(item => {
-                if (new Date(item.date).toDateString() === iter.toDateString()) {
-                    if (item.type === 'rate') {
-                        currentRate = item.value / 100;
-                        logHtml = `<div class="log-item"><div><span>📈 利率: ${item.value}%</span><span class="date-label">${item.date}</span></div><button class="del-btn" onclick="deleteRecord(${item.id})">✕</button></div>` + logHtml;
-                    } else {
-                        currentP += (item.type === 'dep' ? item.value : -item.value);
-                        logHtml = `<div class="log-item"><div><span>${item.type==='dep'?'📥 存入':'📤 提取'}: ${item.value.toFixed(2)}</span><span class="date-label">${item.date}</span></div><button class="del-btn" onclick="deleteRecord(${item.id})">✕</button></div>` + logHtml;
-                    }
-                }
-            });
+            // 利息計算
+            let interest = (item.amt * (item.rate / 100) * totalDays) / 365;
 
-            // 核心修正：算頭不算尾。只有「今天」小於「預測日」時，才計算利息。
-            // 這樣 15 號存，25 號看，只會計算 15,16,17,18,19,20,21,22,23,24 共 10 天利息。
-            if (iter < targetDate && currentP > 0 && currentRate > 0) {
-                accruedI += (currentP * currentRate) / 365;
-                totalDays++;
-            }
+            // 進度計算 (%)
+            let passedDays = Math.ceil((now - sDate) / (1000 * 60 * 60 * 24));
+            let pct = 0;
+            if (passedDays <= 0) pct = 0;
+            else if (now >= eDate) pct = 100;
+            else pct = Math.min(100, Math.max(0, Math.round((passedDays / totalDays) * 100)));
 
-            iter.setDate(iter.getDate() + 1);
-        }
+            const isDone = pct >= 100;
+            const bankName = item.bank || "預設銀行";
 
-        document.getElementById('totalDisplay').innerText = `HK$ ${(currentP + accruedI).toFixed(2)}`;
-        document.getElementById('subInfo').innerText = `本金: ${currentP.toFixed(2)} | 待結利息: ${accruedI.toFixed(2)} (已計 ${totalDays} 天)`;
-        document.getElementById('logList').innerHTML = logHtml;
-        
-        // 預測狀態 UI 顯示
-        const isFuture = targetDate > new Date().setHours(0,0,0,0);
-        document.getElementById('mainCard').className = isFuture ? 'display-card is-predicting' : 'display-card';
-        document.getElementById('statusText').innerText = isFuture ? `預測總額 (至 ${targetStr})` : "當前本利總和 (HKD)";
+            totalPrin += item.amt;
+            totalInt += interest;
+
+            html += `
+                <div class="deposit-item">
+                    <div class="deposit-header">
+                        <div>
+                            <span class="bank-badge">🏦 ${bankName}</span>
+                            <div class="deposit-dates">${item.start} ~ ${item.end}</div>
+                            <div class="deposit-title">年利率: ${item.rate}%</div>
+                            <div class="deposit-duration">⏱️ 約存 ${totalDays} 天 (約 ${totalMonths} 個月)</div>
+                        </div>
+                        <div class="deposit-right">
+                            <div class="deposit-amt">HK$ ${fmt(item.amt)}</div>
+                            <div class="deposit-interest">預估利息: +${fmt(interest)}</div>
+                        </div>
+                    </div>
+
+                    <!-- 進度條組件 -->
+                    <div class="progress-box">
+                        <div class="progress-info">
+                            <span>${isDone ? '🎉 已到期' : '⏳ 存款進度'}</span>
+                            <span>${pct}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill ${isDone ? 'completed' : ''}" style="width: ${pct}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="deposit-footer">
+                        <button class="delete-btn" onclick="deleteDeposit(${item.id})">刪除</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(totalPrin)}`;
+        document.getElementById('totalInterestDisplay').innerText = `預估總利息: HK$ ${fmt(totalInt)}`;
+        document.getElementById('logList').innerHTML = html || '<div style="padding:30px; text-align:center; color:#ccc;">尚無定期存款紀錄</div>';
     }
-    runCalculation();
+
+    pull();
 </script>
 </body>
 </html>
