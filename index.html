@@ -332,4 +332,116 @@
             let diffMonths = (eDate.getFullYear() - sDate.getFullYear()) * 12 + (eDate.getMonth() - sDate.getMonth());
             let totalMonths = Math.max(1, diffMonths);
 
-            let interest = (item
+            let interest = (item.amt * (item.rate / 100) * totalDays) / 365;
+            let dailyInterest = (item.amt * (item.rate / 100)) / 365;
+
+            let passedDays = Math.ceil((now - sDate) / (1000 * 60 * 60 * 24));
+            let remainingDays = Math.ceil((eDate - now) / (1000 * 60 * 60 * 24));
+            
+            let pct = 0;
+            if (passedDays <= 0) pct = 0;
+            else if (now >= eDate) pct = 100;
+            else pct = Math.min(100, Math.max(0, Math.round((passedDays / totalDays) * 100)));
+
+            const isDone = pct >= 100;
+            const bankName = item.bank || "預設銀行";
+            const curr = item.currency || 'HKD';
+            const sym = getSymbol(curr);
+            const timeDesc = `共 ${totalMonths} 個月 (${totalDays} 天)`;
+            const remainText = isDone ? "🎉 已到期完成" : `⏳ 尚餘 ${remainingDays} 天`;
+
+            let cardHtml = `
+                <div class="deposit-item">
+                    <div class="deposit-header">
+                        <div>
+                            <span class="bank-badge">🏦 ${bankName}</span>
+                            <span class="currency-badge">${curr}</span>
+                            <div class="deposit-dates">${item.start} ~ ${item.end}</div>
+                            <div class="deposit-duration">⏱️ ${timeDesc}</div>
+                        </div>
+                        <div class="deposit-right">
+                            <div class="deposit-amt">${sym} ${fmt(item.amt)}</div>
+                            <div class="deposit-rate">年利率 ${item.rate}%</div>
+                            <div class="deposit-interest">利息: +${sym} ${fmt(interest)}</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-box">
+                        <div class="progress-info">
+                            <span>${remainText}</span>
+                            <span>${pct}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill ${isDone ? 'completed' : ''}" style="width: ${pct}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="deposit-footer">
+                        <button class="action-btn edit-btn" onclick="openEditView(${item.id})">編輯</button>
+                        <button class="action-btn delete-btn" onclick="deleteDeposit(${item.id})">刪除</button>
+                    </div>
+                </div>
+            `;
+
+            if (isDone) {
+                finishedItems.push({ html: cardHtml, start: sDate, interest, currency: curr });
+                finishedIntByCurr[curr] = (finishedIntByCurr[curr] || 0) + interest;
+                
+                if (!earliestStart || sDate < earliestStart) {
+                    earliestStart = sDate;
+                }
+            } else {
+                activeItems.push({ html: cardHtml, endDate: eDate, amt: item.amt, interest, daily: dailyInterest, currency: curr });
+                activePrinByCurr[curr] = (activePrinByCurr[curr] || 0) + item.amt;
+                activeIntByCurr[curr] = (activeIntByCurr[curr] || 0) + interest;
+                activeDailyByCurr[curr] = (activeDailyByCurr[curr] || 0) + dailyInterest;
+            }
+        });
+
+        activeItems.sort((a, b) => a.endDate - b.endDate);
+        let activeHtml = activeItems.map(x => x.html).join('');
+        let finishedHtml = finishedItems.map(x => x.html).join('');
+
+        const formatMultiCurr = (obj) => {
+            let parts = [];
+            if (obj.HKD > 0) parts.push(`HK$ ${fmt(obj.HKD)}`);
+            if (obj.CNY > 0) parts.push(`¥ ${fmt(obj.CNY)}`);
+            return parts.length ? parts.join(' | ') : '0.00';
+        };
+
+        if (currentTab === 'active') {
+            document.getElementById('cardTitle').innerText = "進行中定期總本金";
+            document.getElementById('totalPrincipal').innerText = formatMultiCurr(activePrinByCurr);
+            
+            let hkdDaily = activeDailyByCurr.HKD;
+            let cnyDaily = activeDailyByCurr.CNY;
+            let dailyStr = [];
+            if (hkdDaily > 0) dailyStr.push(`HK$ ${fmt(hkdDaily)}`);
+            if (cnyDaily > 0) dailyStr.push(`¥ ${fmt(cnyDaily)}`);
+
+            let hkdMonthly = hkdDaily * 30;
+            let cnyMonthly = cnyDaily * 30;
+            let monthlyStr = [];
+            if (hkdMonthly > 0) monthlyStr.push(`HK$ ${fmt(hkdMonthly)}`);
+            if (cnyMonthly > 0) monthlyStr.push(`¥ ${fmt(cnyMonthly)}`);
+
+            document.getElementById('totalInterestDisplay').innerHTML = `
+                利息: ${formatMultiCurr(activeIntByCurr)}<br>
+                💡 每日總利息: ${dailyStr.join(' | ') || '0.00'} | 每月總利息: ${monthlyStr.join(' | ') || '0.00'}
+            `;
+        } else {
+            document.getElementById('cardTitle').innerText = "已完結定期總賺取利息";
+            document.getElementById('totalPrincipal').innerText = formatMultiCurr(finishedIntByCurr);
+            
+            let rangeText = earliestStart ? `(由 ${earliestStart.toLocaleDateString('sv-SE')} 開始)` : "";
+            document.getElementById('totalInterestDisplay').innerHTML = `🎉 累積至今天全部已順利收款！ ${rangeText}`;
+        }
+        
+        document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
+        document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
+    }
+
+    renderDeposits();
+</script>
+</body>
+</html>
