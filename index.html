@@ -18,6 +18,7 @@
         .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .rate-info { font-size: 11px; background: rgba(0,0,0,0.15); padding: 2px 8px; border-radius: 6px; font-weight: bold; }
         
+        .start-date-label { font-size: 12px; opacity: 0.9; font-weight: bold; margin-bottom: 2px; }
         .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         
         /* 本金與利息的分隔線 */
@@ -129,7 +130,9 @@
                 <span>進行中定期總本金</span>
                 <span class="rate-info" id="rateIndicator">實時匯率載入中...</span>
             </div>
-            <span class="amount" id="totalPrincipal">HK$ 0.00</span>
+            <div id="cardContentArea">
+                <span class="amount" id="totalPrincipal">HK$ 0.00</span>
+            </div>
             <div class="card-divider"></div>
             <div id="totalInterestDisplay"></div>
         </div>
@@ -195,11 +198,47 @@
     </div>
 
 <script>
-    let deposits = JSON.parse(localStorage.getItem('time_deposits')) || [];
+    // 🔗 Google Apps Script 雲端 API 網址
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwZYWFwdkx9crxS7mgzQaR9yBeDHaXPV8KCJ3YGdXBQf9-vWbELoxXzFLMa0jKQdymw/exec";
+
+    let deposits = [];
     let currentTab = 'active';
     let editingId = null;
-
     let liveCnyToHkdRate = 1.18;
+
+    // 從 Google 雲端同步載入資料
+    async function loadFromCloud() {
+        try {
+            let res = await fetch(`${GAS_URL}?action=get`);
+            let data = await res.json();
+            if (Array.isArray(data)) {
+                deposits = data;
+                renderDeposits();
+            }
+        } catch (e) {
+            console.log("從雲端載入失敗，改用本地暫存", e);
+            deposits = JSON.parse(localStorage.getItem('time_deposits')) || [];
+            renderDeposits();
+        }
+    }
+
+    // 同步儲存資料至 Google 雲端
+    async function saveToCloud() {
+        // 同時備份至 localStorage 確保離線也可以用
+        localStorage.setItem('time_deposits', JSON.stringify(deposits));
+        renderDeposits();
+
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deposits: deposits })
+            });
+        } catch (e) {
+            console.log("同步至雲端失敗", e);
+        }
+    }
 
     async function fetchLiveRate() {
         try {
@@ -305,11 +344,6 @@
         renderDeposits();
     }
 
-    function saveAndRender() {
-        localStorage.setItem('time_deposits', JSON.stringify(deposits));
-        renderDeposits();
-    }
-
     function saveDeposit() {
         let bank = document.getElementById('depBank').value.trim() || "預設銀行";
         let currency = document.getElementById('depCurrency').value;
@@ -333,20 +367,20 @@
         
         switchView('home');
         switchTab('active');
-        saveAndRender();
+        saveToCloud();
     }
 
     function deleteDeposit(id) {
         if (confirm("確定刪除這筆定期紀錄？")) {
             deposits = deposits.filter(x => x.id !== id);
-            saveAndRender();
+            saveToCloud();
         }
     }
 
     function handleReset() {
         if (confirm("確定清空所有定期存款紀錄？")) {
             deposits = [];
-            saveAndRender();
+            saveToCloud();
         }
     }
 
@@ -449,7 +483,7 @@
 
         if (currentTab === 'active') {
             document.getElementById('cardTitle').innerHTML = `<span>進行中定期總本金</span><span class="rate-info" id="rateIndicator">實時匯率: ¥ 1 = HK$ ${liveCnyToHkdRate.toFixed(2)}</span>`;
-            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(activeTotalPrin)}`;
+            document.getElementById('cardContentArea').innerHTML = `<span class="amount" id="totalPrincipal">HK$ ${fmt(activeTotalPrin)}</span>`;
             
             let totalMonthly = activeTotalDaily * 30;
 
@@ -465,16 +499,20 @@
             document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(finishedTotalInt)}`;
             
             let rangeText = earliestStart ? `(由 ${earliestStart.toLocaleDateString('sv-SE')} 開始)` : "";
-            document.getElementById('totalInterestDisplay').innerHTML = `
-                <div style="font-size:12px; opacity:0.9; margin-bottom:4px; font-weight:bold;">${rangeText}</div>
+            document.getElementById('cardContentArea').innerHTML = `
+                <div class="start-date-label">${rangeText}</div>
+                <span class="amount" id="totalPrincipal">HK$ ${fmt(finishedTotalInt)}</span>
             `;
+
+            document.getElementById('totalInterestDisplay').innerHTML = ``;
         }
         
         document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
         document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
     }
 
-    renderDeposits();
+    // 啟動時向 Google 雲端同步載入資料與即時匯率
+    loadFromCloud();
     fetchLiveRate();
 </script>
 </body>
