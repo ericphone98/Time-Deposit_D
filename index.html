@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>定期存款記錄器</title>
+    <title>定期存款</title>
     <style>
         :root { --hk-blue: #007aff; --hk-orange: #ff9500; --bg: #f2f2f7; --card-bg: #ffffff; --withdraw: #ff453a; --success: #34c759; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -428,7 +428,7 @@
             const bankName = item.bank || "預設銀行";
             const curr = item.currency || 'HKD';
             const sym = getSymbol(curr);
-            const timeDesc = `共 ${totalMonths} 個月 (${totalDays} 天)`;
+            const timeDesc = `${totalMonths} 個月 (${totalDays} 天)`;
             const remainText = isDone ? "🎉 已到期完成" : `⏳ 尚餘 ${remainingDays} 天`;
 
             let cardHtml = `
