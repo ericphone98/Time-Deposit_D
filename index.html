@@ -12,16 +12,18 @@
 
         .top-panel { flex-shrink: 0; background: var(--bg); padding: 8px 12px 6px 12px; z-index: 10; }
         
-        /* 總結大卡片 (超大字體) */
-        .display-card { background: var(--hk-orange); color: white; padding: 16px; border-radius: 18px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(255,149,0,0.2); }
+        /* 總結大卡片 */
+        .display-card { background: var(--hk-orange); color: white; padding: 16px; border-radius: 18px; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(255,149,0,0.2); transition: background 0.3s; }
+        .display-card.finished-theme { background: #34c759; box-shadow: 0 4px 10px rgba(52,199,89,0.2); }
         .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; }
-        .amount { font-size: 36px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
+        .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         .breakdown { font-size: 14px; opacity: 0.95; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: bold; line-height: 1.5; }
 
         /* 分頁切換列 */
         .tabs-header { display: flex; background: #e5e5ea; border-radius: 10px; padding: 3px; margin-bottom: 6px; }
         .tab-btn { flex: 1; border: none; background: none; font-size: 14px; padding: 9px 0; border-radius: 8px; color: #3a3a3c; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .tab-btn.active { background: white; color: var(--hk-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        #btnFinished.active { color: #34c759; }
 
         /* 頁面切換容器 */
         .view-container { flex: 1; background: white; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #e5e5ea; position: relative; }
@@ -32,17 +34,17 @@
         /* 列表容器 */
         .list-content { overflow-y: auto; flex: 1; padding: 14px 15px 80px 15px; }
         
-        /* 單張定期卡片 (特大字體) */
+        /* 單張定期卡片 */
         .deposit-item { 
             background: #f9f9fb; border: 1.5px solid #d1d1d6; border-radius: 16px; 
-            padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px;
+            padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; position: relative;
         }
         .deposit-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .bank-badge { background: #000000; color: #ffffff; font-size: 13px; padding: 4px 10px; border-radius: 6px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .bank-badge { background: #000000; color: #ffffff; font-size: 13px; padding: 3px 8px; border-radius: 6px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .currency-badge { background: #e5e5ea; color: #1c1c1e; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; }
         .deposit-dates { font-size: 14px; color: #1c1c1e; font-weight: bold; }
         .deposit-duration { font-size: 13px; color: var(--hk-blue); font-weight: bold; margin-top: 4px; }
         
-        /* 右側本金與利率結構 */
         .deposit-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
         .deposit-amt { font-size: 20px; font-weight: bold; color: #248a3d; font-variant-numeric: tabular-nums; }
         .deposit-rate { font-size: 14px; color: var(--hk-orange); font-weight: bold; margin-top: 2px; background: #fff8f0; padding: 2px 6px; border-radius: 4px; }
@@ -55,10 +57,12 @@
         .progress-bar-fill { height: 100%; background: var(--hk-blue); border-radius: 6px; transition: width 0.4s ease; }
         .progress-bar-fill.completed { background: var(--success); }
 
-        .deposit-footer { display: flex; justify-content: flex-end; gap: 15px; margin-top: 4px; border-top: 1px solid #f2f2f7; padding-top: 8px; }
-        .action-btn { background: none; border: none; font-size: 14px; font-weight: bold; cursor: pointer; padding: 4px; }
-        .edit-btn { color: var(--hk-blue); }
-        .delete-btn { color: #ff3b30; }
+        /* 隱藏/精簡的底部編輯與刪除 */
+        .deposit-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 2px; }
+        .action-btn { background: none; border: none; font-size: 11px; font-weight: 500; cursor: pointer; padding: 2px 6px; opacity: 0.6; transition: opacity 0.2s; border-radius: 4px; }
+        .action-btn:hover { opacity: 1; }
+        .edit-btn { color: var(--hk-blue); background: #f0f6ff; }
+        .delete-btn { color: #ff3b30; background: #fff2f2; }
 
         /* 新增/編輯頁面樣式 */
         #addView { padding: 20px; overflow-y: auto; background: #ffffff; z-index: 20; }
@@ -73,10 +77,10 @@
         
         label { display: block; font-size: 13px; color: #3a3a3c; margin-bottom: 6px; font-weight: bold; white-space: nowrap; }
         
-        input { 
+        input, select { 
             width: 100%; height: 48px; border: 1.5px solid #d1d1d6; border-radius: 12px; 
-            font-size: 17px; background: #f9f9f9; text-align: center; margin: 0; padding: 0;
-            -webkit-appearance: none; appearance: none; font-weight: bold;
+            font-size: 17px; background: #f9f9f9; text-align: center; margin: 0; padding: 0 4px;
+            -webkit-appearance: none; appearance: none; font-weight: bold; color: #1c1c1e;
         }
 
         .btn-submit { width: 100%; border: none; border-radius: 12px; font-weight: bold; color: white; font-size: 17px; height: 52px; cursor: pointer; background: var(--hk-blue); margin-top: 10px; }
@@ -106,14 +110,14 @@
 <body>
 
     <div class="top-panel">
-        <div style="font-size:11px; text-align:center; color:#8e8e93; margin-bottom:4px; font-weight:bold;">● 定期存款記錄器 (長者友善升級版)</div>
+        <div style="font-size:11px; text-align:center; color:#8e8e93; margin-bottom:4px; font-weight:bold;">● 定期存款記錄器</div>
 
-        <!-- 總覽卡片：顯示總本金、預估總利息、每日與每月利息 -->
-        <div class="display-card">
-            <div class="card-title">進行中定期總本金</div>
+        <!-- 總覽卡片 (會隨分頁切換顏色與內容) -->
+        <div class="display-card" id="displayCard">
+            <div class="card-title" id="cardTitle">進行中定期總本金</div>
             <span class="amount" id="totalPrincipal">HK$ 0.00</span>
             <div class="breakdown" id="totalInterestDisplay">
-                預估總利息: HK$ 0.00<br>
+                利息: HK$ 0.00<br>
                 💡 每日總利息: HK$ 0.00 | 每月總利息: HK$ 0.00
             </div>
         </div>
@@ -155,8 +159,18 @@
             <div class="input-row">
                 <div class="fields-grid-3">
                     <div class="field-unit"><label>🏦 銀行</label><input type="text" id="depBank" placeholder="匯豐"></div>
-                    <div class="field-unit"><label>💰 本金</label><input type="number" id="depAmt" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-unit">
+                        <label>💱 幣別</label>
+                        <select id="depCurrency">
+                            <option value="HKD">港幣 (HK$)</option>
+                            <option value="CNY">人民幣 (¥)</option>
+                        </select>
+                    </div>
                     <div class="field-unit"><label>📈 年利率 %</label><input type="number" id="depRate" placeholder="0.00" inputmode="decimal"></div>
+                </div>
+                <div class="fields-grid">
+                    <div class="field-unit"><label>💰 本金</label><input type="number" id="depAmt" placeholder="0.00" inputmode="decimal"></div>
+                    <div class="field-unit"></div>
                 </div>
                 <div class="fields-grid">
                     <div class="field-unit"><label>📅 起息日</label><input type="date" id="startDate"></div>
@@ -171,7 +185,7 @@
 <script>
     let deposits = JSON.parse(localStorage.getItem('time_deposits')) || [];
     let currentTab = 'active';
-    let editingId = null; // 記錄當前編輯的 ID
+    let editingId = null;
 
     const getTodayStr = () => new Date().toLocaleDateString('sv-SE');
     const getFutureStr = () => {
@@ -184,6 +198,7 @@
     document.getElementById('endDate').value = getFutureStr();
 
     function fmt(num) { return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function getSymbol(curr) { return curr === 'CNY' ? '¥' : 'HK$'; }
 
     function switchView(target) {
         const homeView = document.getElementById('homeView');
@@ -204,6 +219,7 @@
         document.getElementById('depBank').value = '';
         document.getElementById('depAmt').value = '';
         document.getElementById('depRate').value = '';
+        document.getElementById('depCurrency').value = 'HKD';
         document.getElementById('startDate').value = getTodayStr();
         document.getElementById('endDate').value = getFutureStr();
         switchView('add');
@@ -217,6 +233,7 @@
         document.getElementById('depBank').value = item.bank;
         document.getElementById('depAmt').value = item.amt;
         document.getElementById('depRate').value = item.rate;
+        document.getElementById('depCurrency').value = item.currency || 'HKD';
         document.getElementById('startDate').value = item.start;
         document.getElementById('endDate').value = item.end;
         switchView('add');
@@ -228,18 +245,22 @@
         const btnFinished = document.getElementById('btnFinished');
         const activeContainer = document.getElementById('activeListContainer');
         const finishedContainer = document.getElementById('finishedListContainer');
+        const card = document.getElementById('displayCard');
 
         if (tab === 'active') {
             btnActive.classList.add('active');
             btnFinished.classList.remove('active');
             activeContainer.style.display = 'block';
             finishedContainer.style.display = 'none';
+            card.classList.remove('finished-theme');
         } else {
             btnFinished.classList.add('active');
             btnActive.classList.remove('active');
             activeContainer.style.display = 'none';
             finishedContainer.style.display = 'block';
+            card.classList.add('finished-theme');
         }
+        renderDeposits();
     }
 
     function saveAndRender() {
@@ -249,6 +270,7 @@
 
     function saveDeposit() {
         let bank = document.getElementById('depBank').value.trim() || "預設銀行";
+        let currency = document.getElementById('depCurrency').value;
         let amt = parseFloat(document.getElementById('depAmt').value);
         let rate = parseFloat(document.getElementById('depRate').value);
         let start = document.getElementById('startDate').value;
@@ -262,11 +284,9 @@
         }
 
         if (editingId) {
-            // 編輯現有紀錄
-            deposits = deposits.map(item => item.id === editingId ? { id: editingId, bank, amt, rate, start, end } : item);
+            deposits = deposits.map(item => item.id === editingId ? { id: editingId, bank, currency, amt, rate, start, end } : item);
         } else {
-            // 新增紀錄
-            deposits.push({ id: Date.now(), bank, amt, rate, start, end });
+            deposits.push({ id: Date.now(), bank, currency, amt, rate, start, end });
         }
         
         switchView('home');
@@ -289,9 +309,12 @@
     }
 
     function renderDeposits() {
-        let totalPrin = 0;
-        let totalInt = 0;
-        let totalDailyInt = 0;
+        let activePrinByCurr = { HKD: 0, CNY: 0 };
+        let activeIntByCurr = { HKD: 0, CNY: 0 };
+        let activeDailyByCurr = { HKD: 0, CNY: 0 };
+        
+        let finishedIntByCurr = { HKD: 0, CNY: 0 };
+
         let activeHtml = "";
         let finishedHtml = "";
         const now = new Date();
@@ -305,11 +328,10 @@
             
             let totalDays = Math.max(1, Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)));
             let diffMonths = (eDate.getFullYear() - sDate.getFullYear()) * 12 + (eDate.getMonth() - sDate.getMonth());
-            let daysPart = Math.abs(eDate.getDate() - sDate.getDate());
             let totalMonths = Math.max(1, diffMonths);
 
             let interest = (item.amt * (item.rate / 100) * totalDays) / 365;
-            let dailyInterest = (item.amt * (item.rate / 100)) / 365; // 每日利息
+            let dailyInterest = (item.amt * (item.rate / 100)) / 365;
 
             let passedDays = Math.ceil((now - sDate) / (1000 * 60 * 60 * 24));
             let remainingDays = Math.ceil((eDate - now) / (1000 * 60 * 60 * 24));
@@ -321,6 +343,8 @@
 
             const isDone = pct >= 100;
             const bankName = item.bank || "預設銀行";
+            const curr = item.currency || 'HKD';
+            const sym = getSymbol(curr);
             const timeDesc = `共 ${totalMonths} 個月 (${totalDays} 天)`;
             const remainText = isDone ? "🎉 已到期完成" : `⏳ 尚餘 ${remainingDays} 天`;
 
@@ -329,13 +353,14 @@
                     <div class="deposit-header">
                         <div>
                             <span class="bank-badge">🏦 ${bankName}</span>
+                            <span class="currency-badge">${curr}</span>
                             <div class="deposit-dates">${item.start} ~ ${item.end}</div>
                             <div class="deposit-duration">⏱️ ${timeDesc}</div>
                         </div>
                         <div class="deposit-right">
-                            <div class="deposit-amt">HK$ ${fmt(item.amt)}</div>
+                            <div class="deposit-amt">${sym} ${fmt(item.amt)}</div>
                             <div class="deposit-rate">年利率 ${item.rate}%</div>
-                            <div class="deposit-interest">預估利息: +${fmt(interest)}</div>
+                            <div class="deposit-interest">利息: +${sym} ${fmt(interest)}</div>
                         </div>
                     </div>
 
@@ -350,29 +375,56 @@
                     </div>
 
                     <div class="deposit-footer">
-                        <button class="action-btn edit-btn" onclick="openEditView(${item.id})">✏️ 編輯</button>
-                        <button class="action-btn delete-btn" onclick="deleteDeposit(${item.id})">🗑️ 刪除</button>
+                        <button class="action-btn edit-btn" onclick="openEditView(${item.id})">編輯</button>
+                        <button class="action-btn delete-btn" onclick="deleteDeposit(${item.id})">刪除</button>
                     </div>
                 </div>
             `;
 
             if (isDone) {
                 finishedHtml += cardHtml;
+                finishedIntByCurr[curr] = (finishedIntByCurr[curr] || 0) + interest;
             } else {
                 activeHtml += cardHtml;
-                totalPrin += item.amt;
-                totalInt += interest;
-                totalDailyInt += dailyInterest;
+                activePrinByCurr[curr] = (activePrinByCurr[curr] || 0) + item.amt;
+                activeIntByCurr[curr] = (activeIntByCurr[curr] || 0) + interest;
+                activeDailyByCurr[curr] = (activeDailyByCurr[curr] || 0) + dailyInterest;
             }
         });
 
-        let totalMonthlyInt = totalDailyInt * 30; // 每月利息 (以30日計算)
+        // 格式化多幣別顯示字串
+        const formatMultiCurr = (obj) => {
+            let parts = [];
+            if (obj.HKD > 0) parts.push(`HK$ ${fmt(obj.HKD)}`);
+            if (obj.CNY > 0) parts.push(`¥ ${fmt(obj.CNY)}`);
+            return parts.length ? parts.join(' | ') : '0.00';
+        };
 
-        document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(totalPrin)}`;
-        document.getElementById('totalInterestDisplay').innerHTML = `
-            預估總利息: HK$ ${fmt(totalInt)}<br>
-            💡 每日總利息: HK$ ${fmt(totalDailyInt)} | 每月總利息: HK$ ${fmt(totalMonthlyInt)}
-        `;
+        if (currentTab === 'active') {
+            document.getElementById('cardTitle').innerText = "進行中定期總本金";
+            document.getElementById('totalPrincipal').innerText = formatMultiCurr(activePrinByCurr);
+            
+            let hkdDaily = activeDailyByCurr.HKD;
+            let cnyDaily = activeDailyByCurr.CNY;
+            let dailyStr = [];
+            if (hkdDaily > 0) dailyStr.push(`HK$ ${fmt(hkdDaily)}`);
+            if (cnyDaily > 0) dailyStr.push(`¥ ${fmt(cnyDaily)}`);
+
+            let hkdMonthly = hkdDaily * 30;
+            let cnyMonthly = cnyDaily * 30;
+            let monthlyStr = [];
+            if (hkdMonthly > 0) monthlyStr.push(`HK$ ${fmt(hkdMonthly)}`);
+            if (cnyMonthly > 0) monthlyStr.push(`¥ ${fmt(cnyMonthly)}`);
+
+            document.getElementById('totalInterestDisplay').innerHTML = `
+                利息: ${formatMultiCurr(activeIntByCurr)}<br>
+                💡 每日總利息: ${dailyStr.join(' | ') || '0.00'} | 每月總利息: ${monthlyStr.join(' | ') || '0.00'}
+            `;
+        } else {
+            document.getElementById('cardTitle').innerText = "已完結定期總賺取利息";
+            document.getElementById('totalPrincipal').innerText = formatMultiCurr(finishedIntByCurr);
+            document.getElementById('totalInterestDisplay').innerHTML = `🎉 恭喜全部已順利到期收款！`;
+        }
         
         document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
         document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
