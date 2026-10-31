@@ -18,7 +18,7 @@
         .card-title { font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .rate-info { font-size: 11px; background: rgba(0,0,0,0.15); padding: 2px 8px; border-radius: 6px; font-weight: bold; }
         
-        .start-date-label { font-size: 12px; opacity: 0.9; font-weight: bold; margin-bottom: 2px; }
+        .start-date-label { font-size: 13px; opacity: 0.95; font-weight: bold; }
         .amount { font-size: 34px; font-weight: bold; margin: 0; font-variant-numeric: tabular-nums; }
         
         /* 本金與利息的分隔線 */
@@ -62,7 +62,7 @@
         .deposit-amt { font-size: 20px; font-weight: bold; color: #248a3d; font-variant-numeric: tabular-nums; }
         .deposit-rate { font-size: 14px; color: var(--hk-orange); font-weight: bold; margin-top: 2px; background: #fff8f0; padding: 2px 6px; border-radius: 4px; }
         .deposit-interest { font-size: 13px; color: #3a3a3c; font-weight: bold; margin-top: 4px; }
-        .custom-tag { font-size: 10px; color: #8e8e93; font-weight: normal; margin-left: 2px; }
+        .deposit-total { font-size: 13px; color: #8e8e93; font-weight: bold; margin-top: 2px; }
 
         /* 進度條與尚餘天數 */
         .progress-box { width: 100%; margin-top: 4px; }
@@ -168,7 +168,7 @@
         <div class="view hidden-right" id="addView">
             <div class="page-header">
                 <button class="back-btn" onclick="switchView('home')">‹ 返回主頁</button>
-                <span class="page-title" id="pageTitle">新增定期存款</span>
+                <span class="page-title" id="pageTitle">新增定期</span>
                 <div style="width: 50px;"></div>
             </div>
             
@@ -199,13 +199,22 @@
     </div>
 
 <script>
-    // 🔗 Google Apps Script 雲端 API 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwZYWFwdkx9crxS7mgzQaR9yBeDHaXPV8KCJ3YGdXBQf9-vWbELoxXzFLMa0jKQdymw/exec";
 
     let deposits = [];
     let currentTab = 'active';
     let editingId = null;
     let liveCnyToHkdRate = 1.18;
+
+    // 將 YYYY-MM-DD 轉為 DD/MM/YYYY 顯示
+    function formatDateToDisplay(dateStr) {
+        if (!dateStr) return '';
+        let parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
 
     async function loadFromCloud() {
         try {
@@ -214,10 +223,15 @@
             if (Array.isArray(data)) {
                 deposits = data;
                 renderDeposits();
+            } else {
+                renderDeposits();
             }
         } catch (e) {
             console.log("從雲端載入失敗，改用本地暫存", e);
-            deposits = JSON.parse(localStorage.getItem('time_deposits')) || [];
+            let localData = JSON.parse(localStorage.getItem('time_deposits'));
+            if (Array.isArray(localData)) {
+                deposits = localData;
+            }
             renderDeposits();
         }
     }
@@ -294,7 +308,7 @@
 
     function openAddView() {
         editingId = null;
-        document.getElementById('pageTitle').innerText = "新增定期存款";
+        document.getElementById('pageTitle').innerText = "新增定期";
         document.getElementById('depBank').value = '';
         document.getElementById('depAmt').value = '';
         document.getElementById('depRate').value = '';
@@ -309,11 +323,11 @@
         let item = deposits.find(x => x.id === id);
         if (!item) return;
         editingId = id;
-        document.getElementById('pageTitle').innerText = "編輯定期存款";
+        document.getElementById('pageTitle').innerText = "編輯定期";
         document.getElementById('depBank').value = item.bank;
         document.getElementById('depAmt').value = item.amt;
         document.getElementById('depRate').value = item.rate;
-        document.getElementById('depCustomInterest').value = item.customInterest !== undefined ? item.customInterest : '';
+        document.getElementById('depCustomInterest').value = (item.customInterest !== undefined && item.customInterest !== null) ? item.customInterest : '';
         document.getElementById('depCurrency').value = item.currency || 'HKD';
         document.getElementById('startDate').value = item.start;
         document.getElementById('endDate').value = item.end;
@@ -392,7 +406,6 @@
         let activeTotalDaily = 0;
         
         let finishedTotalInt = 0;
-        let earliestStart = null;
 
         let activeItems = [];
         let finishedItems = [];
@@ -409,12 +422,11 @@
             let diffMonths = (eDate.getFullYear() - sDate.getFullYear()) * 12 + (eDate.getMonth() - sDate.getMonth());
             let totalMonths = Math.max(1, diffMonths);
 
-            // 如果有填寫自訂利息，就優先採用；否則用公式計算
             let calcInterest = (item.amt * (item.rate / 100) * totalDays) / 365;
             let interest = (item.customInterest !== null && item.customInterest !== undefined && !isNaN(item.customInterest)) ? item.customInterest : calcInterest;
             
-            // 每日利息依然按平均比例推算
             let dailyInterest = interest / totalDays;
+            let totalPrincipalAndInterest = item.amt + interest;
 
             let passedDays = Math.ceil((now - sDate) / (1000 * 60 * 60 * 24));
             let remainingDays = Math.ceil((eDate - now) / (1000 * 60 * 60 * 24));
@@ -431,19 +443,23 @@
             const timeDesc = `${totalMonths} 個月 (${totalDays} 天)`;
             const remainText = isDone ? "🎉 已到期完成" : `⏳ 尚餘 ${remainingDays} 天`;
 
+            const displayStart = formatDateToDisplay(item.start);
+            const displayEnd = formatDateToDisplay(item.end);
+
             let cardHtml = `
                 <div class="deposit-item">
                     <div class="deposit-header">
                         <div>
                             <span class="bank-badge">🏦 ${bankName}</span>
                             <span class="currency-badge">${curr}</span>
-                            <div class="deposit-dates">${item.start} ~ ${item.end}</div>
+                            <div class="deposit-dates">${displayStart} ~ ${displayEnd}</div>
                             <div class="deposit-duration">⏱️ ${timeDesc}</div>
                         </div>
                         <div class="deposit-right">
                             <div class="deposit-amt">${sym} ${fmt(item.amt)}</div>
                             <div class="deposit-rate">年利率 ${item.rate}%</div>
                             <div class="deposit-interest">利息: ${sym} ${fmt(interest)}</div>
+                            <div class="deposit-total">本利和: ${sym} ${fmt(totalPrincipalAndInterest)}</div>
                         </div>
                     </div>
 
@@ -469,12 +485,8 @@
             let hkdDaily = toHkdValue(dailyInterest, curr);
 
             if (isDone) {
-                finishedItems.push({ html: cardHtml, start: sDate });
+                finishedItems.push({ html: cardHtml, startDate: sDate, startStr: item.start });
                 finishedTotalInt += hkdInt;
-                
-                if (!earliestStart || sDate < earliestStart) {
-                    earliestStart = sDate;
-                }
             } else {
                 activeItems.push({ html: cardHtml, endDate: eDate });
                 activeTotalPrin += hkdAmt;
@@ -484,6 +496,8 @@
         });
 
         activeItems.sort((a, b) => a.endDate - b.endDate);
+        finishedItems.sort((a, b) => b.startDate - a.startDate);
+
         let activeHtml = activeItems.map(x => x.html).join('');
         let finishedHtml = finishedItems.map(x => x.html).join('');
 
@@ -501,20 +515,26 @@
                 </div>
             `;
         } else {
+            let rangeText = "";
+            if (finishedItems.length > 0) {
+                let latestStart = formatDateToDisplay(finishedItems[0].startStr);
+                let oldestStart = formatDateToDisplay(finishedItems[finishedItems.length - 1].startStr);
+                rangeText = `${oldestStart} 至 ${latestStart}`;
+            }
+
             document.getElementById('cardTitle').innerHTML = `<span>已完結定期總賺取利息</span><span class="rate-info" id="rateIndicator">實時匯率: ¥ 1 = HK$ ${liveCnyToHkdRate.toFixed(2)}</span>`;
-            document.getElementById('totalPrincipal').innerText = `HK$ ${fmt(finishedTotalInt)}`;
             
-            let rangeText = earliestStart ? `(由 ${earliestStart.toLocaleDateString('sv-SE')} 開始)` : "";
             document.getElementById('cardContentArea').innerHTML = `
-                <div class="start-date-label">${rangeText}</div>
                 <span class="amount" id="totalPrincipal">HK$ ${fmt(finishedTotalInt)}</span>
             `;
 
-            document.getElementById('totalInterestDisplay').innerHTML = ``;
+            document.getElementById('totalInterestDisplay').innerHTML = `
+                <div class="start-date-label">由 ${rangeText}</div>
+            `;
         }
         
-        document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期存款</div>';
-        document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期存款</div>';
+        document.getElementById('activeList').innerHTML = activeHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有進行中的定期</div>';
+        document.getElementById('finishedList').innerHTML = finishedHtml || '<div style="padding:40px; text-align:center; color:#8e8e93; font-size:15px; font-weight:bold;">沒有已完結的定期</div>';
     }
 
     loadFromCloud();
